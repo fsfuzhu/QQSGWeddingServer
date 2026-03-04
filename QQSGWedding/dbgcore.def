@@ -1,0 +1,4 @@
+LIBRARY dbgcore
+EXPORTS
+	MiniDumpReadDumpStream=FakeMiniDumpReadDumpStream @1
+	MiniDumpWriteDump=FakeMiniDumpWriteDump @2
