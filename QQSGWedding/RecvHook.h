@@ -6,8 +6,8 @@
 // RecvHook - 收包分发函数 hook, 监控服务器下发的婚礼包
 // =====================================================================
 //
-// Hook 目标: sub_594450 (主收包分发函数)
-//   char __cdecl sub_594450(int packetType, int packetData)
+// Hook 目标: sub_594340 (主收包分发函数)
+//   char __cdecl sub_594340(int packetType, int packetData)
 //   所有服务器包经此函数分发到各子系统
 //
 // 婚礼包类型 (服务器→客户端):

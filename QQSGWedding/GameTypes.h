@@ -20,7 +20,7 @@ typedef char(__thiscall* OriginalFuncType)(DWORD* thisObj, DWORD* a2);
 
 namespace Offsets
 {
-    const DWORD Base = 0x1351620;
+    const DWORD Base = 0x1351660;
     const DWORD CLogicModule = 0x4;
     const DWORD CQQSGGameMap = 0xC;
     const DWORD CGameObjMgr = 0x14;
@@ -66,10 +66,10 @@ namespace Offsets
     const DWORD BackpackItemID = 0x8;
     const DWORD BackpackItemName = 0x44;
     const DWORD PlayerID = 0x70;
-    const DWORD IgnoreForcedLock = 0x4B22D1;
-    const DWORD IgnoreForcedLock2 = 0x4D7883;
+    const DWORD IgnoreForcedLock = 0x4B2241;
+    const DWORD IgnoreForcedLock2 = 0x4D7763;
 
-    const DWORD SendPacket_ECX = 0x1363D90;
+    const DWORD SendPacket_ECX = 0x1363DD0;
 }
 
 namespace Funcs

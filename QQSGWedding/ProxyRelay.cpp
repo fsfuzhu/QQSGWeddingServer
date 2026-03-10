@@ -24,12 +24,12 @@
 #pragma warning(disable: 4996)
 
 // ============ Game Memory Addresses ============
-static constexpr DWORD ADDR_NET_OBJ_PTR   = 0x1363D90;
+static constexpr DWORD ADDR_NET_OBJ_PTR   = 0x1363DD0;
 static constexpr DWORD KEY_OFFSET          = 0x08;
 static constexpr DWORD KEY_SIZE            = 16;
-static constexpr DWORD ADDR_TIMER_OBJ      = 0x1351788;
-static constexpr DWORD FN_GET_GAME_TIME    = 0x8022E0;
-static constexpr DWORD ADDR_BASE           = 0x1351620;
+static constexpr DWORD ADDR_TIMER_OBJ      = 0x13517C8;
+static constexpr DWORD FN_GET_GAME_TIME    = 0x802220;
+static constexpr DWORD ADDR_BASE           = 0x1351660;
 static constexpr DWORD OFF_GAME_MAP        = 0x0C;
 static constexpr DWORD OFF_MASTER          = 0x2A0;
 static constexpr DWORD OFF_PLAYER_X        = 0x18;
@@ -39,7 +39,7 @@ static constexpr DWORD OFF_PLAYER_NAME     = 0x87D0;
 static constexpr DWORD PLAYER_NAME_MAX     = 32;
 
 // ============ Config ============
-static char s_proxyIP[64]      = "119.91.63.44";  // 固定代理IP
+static char s_proxyIP[64]      = "129.204.252.233";  // 固定代理IP
 static WORD s_proxyPort        = 19900;
 static bool s_redirectEnabled  = true;              // 直接启用重定向
 static char s_serverName[32]   = {0};               // 检测到的服务器名称（仅日志用）

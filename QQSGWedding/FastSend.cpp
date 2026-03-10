@@ -6,19 +6,19 @@
 // 游戏函数指针类型
 // =====================================================================
 
-// QQ TEA CBC 加密: sub_A93875
+// QQ TEA CBC 加密: sub_A93745
 // char __cdecl encrypt(char* plaintext, int ptLen, int keyPtr, BYTE* output, DWORD* outLen)
 typedef void(__cdecl* TEAEncryptFunc)(char* plaintext, int ptLen, int key, unsigned char* output, unsigned int* outLen);
 
-// 游戏内存分配器: sub_D6B502
-// void* __cdecl alloc(int size)
+// 游戏内存分配器: sub_D6B432 (CRT malloc thunk)
+// void* __cdecl malloc(size_t size)
 typedef void* (__cdecl* GameAllocFunc)(int size);
 
-// 游戏内存释放器: sub_D6B4DE
+// 游戏内存释放器: sub_D6B40E (CRT free thunk)
 // void __cdecl free(void* ptr)
 typedef void(__cdecl* GameFreeFunc)(void* ptr);
 
-// 队列 push: 0xAF4E10
+// 队列 push: 0xAF4CE0
 // void __thiscall push(Queue* this, void* packet)  — retn 4
 // 用 __fastcall 模拟 __thiscall: ECX=this, EDX=unused, 栈上=packet
 typedef void(__fastcall* QueuePushFunc)(void* queue, void* edx_unused, void* packet);
@@ -26,11 +26,11 @@ typedef void(__fastcall* QueuePushFunc)(void* queue, void* edx_unused, void* pac
 // =====================================================================
 // 地址常量
 // =====================================================================
-static const DWORD ADDR_TEA_ENCRYPT = 0xA93875;
-static const DWORD ADDR_GAME_ALLOC  = 0xD6B502;
-static const DWORD ADDR_GAME_FREE   = 0xD6B4DE;
-static const DWORD ADDR_QUEUE_PUSH  = 0xAF4E10;
-static const DWORD ADDR_CONN_PTR    = 0x1363D90;  // *(DWORD*)此处 = connObj
+static const DWORD ADDR_TEA_ENCRYPT = 0xA93745;
+static const DWORD ADDR_GAME_ALLOC  = 0xD6B432;
+static const DWORD ADDR_GAME_FREE   = 0xD6B40E;
+static const DWORD ADDR_QUEUE_PUSH  = 0xAF4CE0;
+static const DWORD ADDR_CONN_PTR    = 0x1363DD0;  // *(DWORD*)此处 = connObj
 
 // =====================================================================
 // 函数指针
@@ -156,7 +156,7 @@ void FastSend::PreBuildPackets(int packetType, const char* data, int dataLen, in
 
         int totalSize = 16 + (int)encLen;
 
-        // 2. 分配包缓冲 (使用游戏分配器, 确保 vtable[7] 回收时不崩溃)
+        // 2. 分配包缓冲 (使用游戏分配器, 确保发送线程回收时不崩溃)
         void* buf = fnGameAlloc(PACKET_BUF_SIZE);
         if (!buf) continue;
 
