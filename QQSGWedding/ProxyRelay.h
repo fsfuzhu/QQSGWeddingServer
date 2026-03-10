@@ -12,13 +12,8 @@
 //   2. Send player name (KNAM), position/handle (KINF), game time (KTIM)
 //   3. Send game server address (KSRV) — auto-detected from connect()
 //   4. Inline hook ws2_32!connect to redirect game ports -> proxy
-//   5. Auto-detect server name from window title, map to proxy IP
 //
-// Config: ProxyRelay.ini in game EXE directory (auto-generated on server detection)
-//   [Proxy]
-//   IP=101.35.81.74      (auto-set by DetectServerFromTitle)
-//   Port=19900
-//   ServerName=桃园结义   (auto-set by DetectServerFromTitle)
+// Proxy IP: 43.139.221.10:19900 (hardcoded)
 // ============================================================
 
 void ProxyRelayInit();       // Call once from MyFunInpawn first tick

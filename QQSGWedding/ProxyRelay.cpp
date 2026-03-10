@@ -38,11 +38,11 @@ static constexpr DWORD OFF_PLAYER_HANDLE   = 0x70;
 static constexpr DWORD OFF_PLAYER_NAME     = 0x87D0;
 static constexpr DWORD PLAYER_NAME_MAX     = 32;
 
-// ============ Config (loaded from INI) ============
-static char s_proxyIP[64]      = "";       // 空: 等待 DetectServerFromTitle 设置
+// ============ Config ============
+static char s_proxyIP[64]      = "119.91.63.44";  // 固定代理IP
 static WORD s_proxyPort        = 19900;
-static bool s_redirectEnabled  = false;    // 仅在检测到服务器名称后启用
-static char s_serverName[32]   = {0};      // 检测到的服务器名称
+static bool s_redirectEnabled  = true;              // 直接启用重定向
+static char s_serverName[32]   = {0};               // 检测到的服务器名称（仅日志用）
 
 // ============ Game Port Detection ============
 // Range-based detection covering known game server port patterns.
@@ -55,9 +55,6 @@ static bool IsKnownGamePort(WORD port)
     if (port >= 12501 && port <= 12518) return true;
     return false;
 }
-
-// ============ INI Path (module-level, built once in LoadProxyConfig) ============
-static char s_iniPath[MAX_PATH] = {0};
 
 // ============ Runtime State ============
 static BYTE      s_currentKey[KEY_SIZE]       = {0};
@@ -92,44 +89,13 @@ static void Log(const char* fmt, ...)
     }
 }
 
-// ============ Load Config from INI ============
+// ============ Load Config ============
 static void LoadProxyConfig()
 {
-    // Build INI path once (module-level s_iniPath)
-    char exePath[MAX_PATH] = {0};
-    GetModuleFileNameA(NULL, exePath, MAX_PATH);
-
-    strncpy(s_iniPath, exePath, MAX_PATH - 1);
-    s_iniPath[MAX_PATH - 1] = '\0';
-
-    char* lastSlash = strrchr(s_iniPath, '\\');
-    if (lastSlash) {
-        *(lastSlash + 1) = '\0';
-        strncat(s_iniPath, "ProxyRelay.ini", MAX_PATH - strlen(s_iniPath) - 1);
-    } else {
-        strncpy(s_iniPath, "ProxyRelay.ini", MAX_PATH - 1);
-    }
-
-    GetPrivateProfileStringA("Proxy", "IP", "",
-                             s_proxyIP, sizeof(s_proxyIP), s_iniPath);
-    s_proxyPort = (WORD)GetPrivateProfileIntA("Proxy", "Port", 19900, s_iniPath);
-    GetPrivateProfileStringA("Proxy", "ServerName", "",
-                             s_serverName, sizeof(s_serverName), s_iniPath);
-
-    // INI 里配了 proxy IP → 立即启用重定向, 不等窗口标题检测
-    if (s_proxyIP[0] != '\0') {
-        g_proxyAddr = inet_addr(s_proxyIP);
-        if (g_proxyAddr != INADDR_NONE) {
-            s_redirectEnabled = true;
-            Log("[ProxyRelay] Config: proxy=%s:%d server=%s — redirect ENABLED from INI\n",
-                s_proxyIP, s_proxyPort, s_serverName[0] ? s_serverName : "(unknown)");
-        } else {
-            Log("[ProxyRelay] Config: proxy=%s:%d — invalid IP, redirect deferred\n",
-                s_proxyIP, s_proxyPort);
-        }
-    } else {
-        Log("[ProxyRelay] Config: no proxy IP in INI, redirect deferred until server detected\n");
-    }
+    // IP 已固定写死, 直接设置 g_proxyAddr
+    g_proxyAddr = inet_addr(s_proxyIP);
+    Log("[ProxyRelay] Config: proxy=%s:%d — redirect ENABLED (hardcoded)\n",
+        s_proxyIP, s_proxyPort);
 }
 
 // ============ Read TEA Key from Game Memory ============
@@ -573,51 +539,27 @@ static bool SendPlayerInfo(SOCKET sock, WORD x, WORD y, DWORD handle)
     return sent == 16;
 }
 
-// ============ Server Name Detection ============
-// 从游戏窗口标题解析服务器名称, 根据名称决定代理IP
-// 标题格式: "QQ三国1.0Beta83Build7 桃园结义 18线"
-// 检测到后自动写入 INI, 下次启动直接启用重定向 (无需换线)
+// ============ Server Name Detection (仅日志用) ============
+// 从游戏窗口标题解析服务器名称, 仅用于日志记录
+// IP 已固定写死, 不再根据服务器名切换
 static void DetectServerFromTitle()
 {
     if (!GameHwnd) return;
+    // 已检测过, 不重复
+    if (s_serverName[0] != '\0') return;
 
     char title[256] = {0};
     GetWindowTextA((HWND)GameHwnd, title, sizeof(title));
     if (title[0] == 0) return;
 
-    // 匹配已知服务器名称 → 对应代理IP (生产模式)
-    struct ServerEntry { const char* name; const char* ip; };
-    static const ServerEntry servers[] = {
-        { "桃园结义", "101.35.81.74" },
-        { "巧借东风", "101.35.81.74" },
-        { "单刀赴会", "106.53.72.85" },
-        { "抚琴退敌", "159.75.182.65" },
+    static const char* knownServers[] = {
+        "桃园结义", "巧借东风", "单刀赴会", "抚琴退敌",
     };
 
-    for (int i = 0; i < _countof(servers); i++) {
-        if (strstr(title, servers[i].name)) {
-            // 服务器名没变 → 跳过
-            if (s_redirectEnabled && strcmp(s_serverName, servers[i].name) == 0)
-                return;
-
-            // 新服务器或服务器切换
-            bool changed = (s_serverName[0] != '\0' && strcmp(s_serverName, servers[i].name) != 0);
-            strncpy(s_serverName, servers[i].name, sizeof(s_serverName) - 1);
-            strncpy(s_proxyIP, servers[i].ip, sizeof(s_proxyIP) - 1);
-            g_proxyAddr = inet_addr(s_proxyIP);
-            s_redirectEnabled = true;
-
-            if (changed)
-                Log("[ProxyRelay] Server CHANGED: %s -> proxy %s\n", servers[i].name, servers[i].ip);
-            else
-                Log("[ProxyRelay] Server detected: %s -> proxy %s\n", servers[i].name, servers[i].ip);
-
-            // 持久化到 INI, 下次启动直接启用重定向
-            if (s_iniPath[0] != '\0') {
-                WritePrivateProfileStringA("Proxy", "IP", servers[i].ip, s_iniPath);
-                WritePrivateProfileStringA("Proxy", "ServerName", servers[i].name, s_iniPath);
-                Log("[ProxyRelay] Saved to INI: server=%s proxy=%s\n", servers[i].name, servers[i].ip);
-            }
+    for (int i = 0; i < _countof(knownServers); i++) {
+        if (strstr(title, knownServers[i])) {
+            strncpy(s_serverName, knownServers[i], sizeof(s_serverName) - 1);
+            Log("[ProxyRelay] Server detected: %s (proxy fixed: %s)\n", knownServers[i], s_proxyIP);
             return;
         }
     }
@@ -635,7 +577,7 @@ void ProxyRelayInit()
     LoadProxyConfig();
 
     if (InstallConnectHook()) {
-        Log("[ProxyRelay] Connect hook installed (redirect deferred until server detected)\n");
+        Log("[ProxyRelay] Connect hook installed (redirect -> %s:%d)\n", s_proxyIP, s_proxyPort);
     } else {
         Log("[ProxyRelay] WARNING: Connect hook failed, game traffic will NOT be redirected\n");
     }
