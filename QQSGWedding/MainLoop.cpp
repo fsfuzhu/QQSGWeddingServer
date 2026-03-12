@@ -9,11 +9,11 @@
 
 // === 帧率限制补丁 ===
 // sub_801AB0 帧率限制器:
-//   0x801B3F: and edi,-9; add edi,25  → framerate ? 16ms : 25ms (帧时间)
-//   0x801B75: push ebp; call Sleep    → Sleep(10) 前台 / Sleep(1) 后台
+//   ADDR_FRAME_TIME_PATCH: and edi,-9; add edi,25  → framerate ? 16ms : 25ms (帧时间)
+//   ADDR_SLEEP_PATCH: push ebp; call Sleep    → Sleep(10) 前台 / Sleep(1) 后台
 // 补丁策略: 替换帧时间为固定值 + NOP掉Sleep调用
-static BYTE g_origFrameTime[6] = { 0 };  // 0x801B3F 原始字节备份
-static BYTE g_origSleep[7] = { 0 };      // 0x801B75 原始字节备份
+static BYTE g_origFrameTime[6] = { 0 };  // ADDR_FRAME_TIME_PATCH 原始字节备份
+static BYTE g_origSleep[7] = { 0 };      // ADDR_SLEEP_PATCH 原始字节备份
 static bool g_frameLimitPatched = false;
 
 void PatchFrameLimit(int frameTimeMs)
@@ -24,19 +24,19 @@ void PatchFrameLimit(int frameTimeMs)
     DWORD old1, old2;
 
     // 补丁1: 帧时间 — 替换 and edi,-9; add edi,25 为 mov edi,N; nop
-    VirtualProtect((void*)0x801B3F, 6, PAGE_EXECUTE_READWRITE, &old1);
+    VirtualProtect((void*)ADDR_FRAME_TIME_PATCH, 6, PAGE_EXECUTE_READWRITE, &old1);
     if (!g_frameLimitPatched)
-        memcpy(g_origFrameTime, (void*)0x801B3F, 6);
+        memcpy(g_origFrameTime, (void*)ADDR_FRAME_TIME_PATCH, 6);
     BYTE patchFrame[] = { 0xBF, (BYTE)frameTimeMs, 0x00, 0x00, 0x00, 0x90 };
-    memcpy((void*)0x801B3F, patchFrame, 6);
-    VirtualProtect((void*)0x801B3F, 6, old1, &old1);
+    memcpy((void*)ADDR_FRAME_TIME_PATCH, patchFrame, 6);
+    VirtualProtect((void*)ADDR_FRAME_TIME_PATCH, 6, old1, &old1);
 
     // 补丁2: 移除Sleep — NOP掉 push ebp; call [Sleep]
-    VirtualProtect((void*)0x801B75, 7, PAGE_EXECUTE_READWRITE, &old2);
+    VirtualProtect((void*)ADDR_SLEEP_PATCH, 7, PAGE_EXECUTE_READWRITE, &old2);
     if (!g_frameLimitPatched)
-        memcpy(g_origSleep, (void*)0x801B75, 7);
-    memset((void*)0x801B75, 0x90, 7);
-    VirtualProtect((void*)0x801B75, 7, old2, &old2);
+        memcpy(g_origSleep, (void*)ADDR_SLEEP_PATCH, 7);
+    memset((void*)ADDR_SLEEP_PATCH, 0x90, 7);
+    VirtualProtect((void*)ADDR_SLEEP_PATCH, 7, old2, &old2);
 
     g_frameLimitPatched = true;
 }
@@ -46,13 +46,13 @@ void RestoreFrameLimit()
     if (!g_frameLimitPatched) return;
     DWORD old;
 
-    VirtualProtect((void*)0x801B3F, 6, PAGE_EXECUTE_READWRITE, &old);
-    memcpy((void*)0x801B3F, g_origFrameTime, 6);
-    VirtualProtect((void*)0x801B3F, 6, old, &old);
+    VirtualProtect((void*)ADDR_FRAME_TIME_PATCH, 6, PAGE_EXECUTE_READWRITE, &old);
+    memcpy((void*)ADDR_FRAME_TIME_PATCH, g_origFrameTime, 6);
+    VirtualProtect((void*)ADDR_FRAME_TIME_PATCH, 6, old, &old);
 
-    VirtualProtect((void*)0x801B75, 7, PAGE_EXECUTE_READWRITE, &old);
-    memcpy((void*)0x801B75, g_origSleep, 7);
-    VirtualProtect((void*)0x801B75, 7, old, &old);
+    VirtualProtect((void*)ADDR_SLEEP_PATCH, 7, PAGE_EXECUTE_READWRITE, &old);
+    memcpy((void*)ADDR_SLEEP_PATCH, g_origSleep, 7);
+    VirtualProtect((void*)ADDR_SLEEP_PATCH, 7, old, &old);
 
     g_frameLimitPatched = false;
 }

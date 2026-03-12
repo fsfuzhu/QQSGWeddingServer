@@ -56,7 +56,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved) {
         e_load();
         HideModule(hModule);
 
-        DWORD virtualTable = 0xDC630C;
+        DWORD virtualTable = ADDR_VT_BASE_INPAWN;
         DWORD old;
         VirtualProtect((LPVOID)virtualTable, 4, PAGE_EXECUTE_READWRITE, &old);
         Asm_WriteMemory<DWORD>(virtualTable, (DWORD)MyFunInpawn);

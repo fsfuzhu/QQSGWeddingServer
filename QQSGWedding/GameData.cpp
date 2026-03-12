@@ -107,7 +107,7 @@ DWORD GetCurrentServerLine()
 
 signed int InvokeLua(const char* a2)
 {
-    DWORD thisInt = *(DWORD*)0x1414B20;
+    DWORD thisInt = *(DWORD*)ADDR_LUA_MANAGER;
     thisInt = *(DWORD*)(thisInt + 0x614);
     return Funcs::Lua(thisInt, (int)a2, 0);
 }

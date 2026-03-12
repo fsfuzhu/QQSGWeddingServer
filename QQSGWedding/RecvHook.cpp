@@ -1,4 +1,5 @@
 ﻿#include "RecvHook.h"
+#include "../../GameOffsets.h"
 #include <cstdio>
 #include <cstring>
 
@@ -9,7 +10,7 @@
 //   前5字节: 56 8B 74 24 08 (push esi; mov esi,[esp+8])
 // =====================================================================
 
-static const DWORD HOOK_ADDR   = 0x594340;
+static const DWORD HOOK_ADDR   = ADDR_RECV_HOOK_TARGET;
 static const int   HOOK_LEN    = 5;           // 替换的字节数
 static const DWORD HOOK_RETURN = HOOK_ADDR + HOOK_LEN;  // 0x594345
 
@@ -28,7 +29,7 @@ static volatile int  g_lastWeddingType = 0;
 // 剩余时间 = target_sec * 1000 - server_time_ms
 static volatile DWORD g_targetTimeSec = 0;
 static volatile bool  g_hasCountdown = false;
-static const DWORD ADDR_TIME_BASE = 0x13517C8;
+static const DWORD ADDR_TIME_BASE = ADDR_TIMER_OBJ;
 
 // === UI 控件 ===
 static HWND g_hLogList    = NULL;

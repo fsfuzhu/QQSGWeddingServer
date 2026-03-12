@@ -19,17 +19,16 @@
 
 #include "ProxyRelay.h"
 #include "Globals.h"
+#include "../../GameOffsets.h"
 
 // Suppress deprecation warnings for inet_addr etc.
 #pragma warning(disable: 4996)
 
 // ============ Game Memory Addresses ============
-static constexpr DWORD ADDR_NET_OBJ_PTR   = 0x1363DD0;
+// Game address macros from GameOffsets.h:
+//   ADDR_SEND_PACKET_ECX (net obj ptr), ADDR_TIMER_OBJ, ADDR_GET_GAME_TIME, ADDR_BASE
 static constexpr DWORD KEY_OFFSET          = 0x08;
 static constexpr DWORD KEY_SIZE            = 16;
-static constexpr DWORD ADDR_TIMER_OBJ      = 0x13517C8;
-static constexpr DWORD FN_GET_GAME_TIME    = 0x802220;
-static constexpr DWORD ADDR_BASE           = 0x1351660;
 static constexpr DWORD OFF_GAME_MAP        = 0x0C;
 static constexpr DWORD OFF_MASTER          = 0x2A0;
 static constexpr DWORD OFF_PLAYER_X        = 0x18;
@@ -101,7 +100,7 @@ static void LoadProxyConfig()
 // ============ Read TEA Key from Game Memory ============
 static bool ReadTEAKey(BYTE* outKey)
 {
-    DWORD netObj = *(DWORD*)ADDR_NET_OBJ_PTR;
+    DWORD netObj = *(DWORD*)ADDR_SEND_PACKET_ECX;
     if (netObj == 0 || netObj == 0xFFFFFFFF)
         return false;
 
@@ -189,7 +188,7 @@ static bool ReadPlayerInfo(WORD* x, WORD* y, DWORD* handle)
 
 // ============ Read Game Time ============
 typedef __int64 (__thiscall *PFN_GetGameTime)(int);
-static const PFN_GetGameTime fnGetGameTime = (PFN_GetGameTime)FN_GET_GAME_TIME;
+static const PFN_GetGameTime fnGetGameTime = (PFN_GetGameTime)ADDR_GET_GAME_TIME;
 
 static __int64 ReadGameTime()
 {

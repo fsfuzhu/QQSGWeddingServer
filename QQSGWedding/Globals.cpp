@@ -3,9 +3,9 @@
 // === Funcs 命名空间定义 ===
 namespace Funcs
 {
-    OriginalFuncType originalFunction = (OriginalFuncType)0x7AC6F0;
-    SendPacketType SendPacket = (SendPacketType)0x1740C5B;
-    LuaType Lua = (LuaType)0xACF580;
+    OriginalFuncType originalFunction = (OriginalFuncType)ADDR_ORIGINAL_FUNCTION;
+    SendPacketType SendPacket = (SendPacketType)ADDR_SEND_PACKET;
+    LuaType Lua = (LuaType)ADDR_LUA;
 }
 
 // === HWND 句柄 ===

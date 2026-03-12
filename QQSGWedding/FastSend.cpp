@@ -1,4 +1,5 @@
 #include "FastSend.h"
+#include "../../GameOffsets.h"
 #include <cstring>
 #include <cstdlib>
 
@@ -18,19 +19,15 @@ typedef void* (__cdecl* GameAllocFunc)(int size);
 // void __cdecl free(void* ptr)
 typedef void(__cdecl* GameFreeFunc)(void* ptr);
 
-// 队列 push: 0xAF4CE0
+// 队列 push: 0xAF4CF0
 // void __thiscall push(Queue* this, void* packet)  — retn 4
 // 用 __fastcall 模拟 __thiscall: ECX=this, EDX=unused, 栈上=packet
 typedef void(__fastcall* QueuePushFunc)(void* queue, void* edx_unused, void* packet);
 
 // =====================================================================
-// 地址常量
+// 地址常量 (来自 GameOffsets.h: ADDR_TEA_ENCRYPT, ADDR_GAME_ALLOC,
+//   ADDR_GAME_FREE, ADDR_QUEUE_PUSH, ADDR_SEND_PACKET_ECX)
 // =====================================================================
-static const DWORD ADDR_TEA_ENCRYPT = 0xA93745;
-static const DWORD ADDR_GAME_ALLOC  = 0xD6B432;
-static const DWORD ADDR_GAME_FREE   = 0xD6B40E;
-static const DWORD ADDR_QUEUE_PUSH  = 0xAF4CE0;
-static const DWORD ADDR_CONN_PTR    = 0x1363DD0;  // *(DWORD*)此处 = connObj
 
 // =====================================================================
 // 函数指针
@@ -60,7 +57,7 @@ static bool g_initialized = false;
 // =====================================================================
 static DWORD GetConnObj()
 {
-    DWORD ptr = *(DWORD*)ADDR_CONN_PTR;
+    DWORD ptr = *(DWORD*)ADDR_SEND_PACKET_ECX;
     if (ptr == 0) return 0;
     return ptr;
 }

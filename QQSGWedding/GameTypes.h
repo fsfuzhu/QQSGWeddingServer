@@ -13,6 +13,9 @@
 // HAP SDK
 #include "HAP_SDK.h"
 
+// 统一偏移量定义
+#include "../../GameOffsets.h"
+
 // Function pointer types
 typedef int(__thiscall* LuaType)(DWORD thisObj, int a2, int a3);
 typedef int(__thiscall* SendPacketType)(DWORD thisObj, int head, int code, int len);
@@ -20,7 +23,7 @@ typedef char(__thiscall* OriginalFuncType)(DWORD* thisObj, DWORD* a2);
 
 namespace Offsets
 {
-    const DWORD Base = 0x1351660;
+    const DWORD Base = ADDR_BASE;
     const DWORD CLogicModule = 0x4;
     const DWORD CQQSGGameMap = 0xC;
     const DWORD CGameObjMgr = 0x14;
@@ -60,16 +63,16 @@ namespace Offsets
     const DWORD IgnoreChaos = 0x8684;
     const DWORD IgnoreBlackScreen_1 = 0x1DC;
     const DWORD IgnoreBlackScreen_2 = 0x200;
-    const DWORD Ignore_BlackScreen = 0x4ACCD1;
+    const DWORD Ignore_BlackScreen = ADDR_IGNORE_BLACK_SCREEN;
     const DWORD BackpackItemStartBase = 0x4F0;
     const DWORD BackpackItemEndBase = 0x4F4;
     const DWORD BackpackItemID = 0x8;
     const DWORD BackpackItemName = 0x44;
     const DWORD PlayerID = 0x70;
-    const DWORD IgnoreForcedLock = 0x4B2241;
-    const DWORD IgnoreForcedLock2 = 0x4D7763;
+    const DWORD IgnoreForcedLock = ADDR_IGNORE_FORCED_LOCK;
+    const DWORD IgnoreForcedLock2 = ADDR_IGNORE_FORCED_LOCK2;
 
-    const DWORD SendPacket_ECX = 0x1363DD0;
+    const DWORD SendPacket_ECX = ADDR_SEND_PACKET_ECX;
 }
 
 namespace Funcs
