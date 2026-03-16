@@ -2,6 +2,7 @@
 #include "Globals.h"
 #include "GameData.h"
 #include "Navigation.h"
+#include "ProxyRelay.h"
 #include <cstdio>
 #include <cstring>
 
@@ -161,9 +162,25 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
         // === 婚礼设置 ===
         CreateWindowA("Button", "婚礼设置", WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | BS_GROUPBOX,
             5, 5, 435, 80, hwnd, NULL, NULL, NULL);
-        CreateWindowA("Static", "抢亲密婚礼已自动开启",
-            WS_CHILD | WS_VISIBLE | SS_LEFT,
-            15, 25, 200, 24, hwnd, NULL, NULL, NULL);
+        CreateWindowA("Static", "提前:", WS_CHILD | WS_VISIBLE,
+            15, 27, 35, 20, hwnd, NULL, NULL, NULL);
+        Edit_hwnd_BurstStart = CreateWindowA("Edit", "600",
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
+            50, 25, 50, 24, hwnd, NULL, NULL, NULL);
+        CreateWindowA("Static", "ms", WS_CHILD | WS_VISIBLE,
+            102, 27, 20, 20, hwnd, NULL, NULL, NULL);
+
+        CreateWindowA("Static", "每ms:", WS_CHILD | WS_VISIBLE,
+            125, 27, 40, 20, hwnd, NULL, NULL, NULL);
+        Edit_hwnd_BurstPerMs = CreateWindowA("Edit", "10",
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER,
+            165, 25, 40, 24, hwnd, NULL, NULL, NULL);
+        CreateWindowA("Static", "包", WS_CHILD | WS_VISIBLE,
+            207, 27, 15, 20, hwnd, NULL, NULL, NULL);
+
+        Button_hwnd_SyncWedding = CreateWindowA("Button", "同步",
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD,
+            230, 25, 50, 24, hwnd, (HMENU)HMENU_SyncWedding, NULL, NULL);
         CheckBox_hwnd_AutoWeddingDate = CreateWindowA("Button", "抢贵族婚期",
             WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX,
             15, 55, 110, 24, hwnd, NULL, NULL, NULL);
@@ -224,6 +241,19 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
     case WM_COMMAND:
     {
+        if (LOWORD(wParam) == HMENU_SyncWedding)
+        {
+            char sBurstStart[16] = { 0 }, sBurstPerMs[16] = { 0 };
+            GetWindowTextA(Edit_hwnd_BurstStart, sBurstStart, 16);
+            GetWindowTextA(Edit_hwnd_BurstPerMs, sBurstPerMs, 16);
+            int burstStart = atoi(sBurstStart);
+            int burstPerMs = atoi(sBurstPerMs);
+            if (burstStart < 0) burstStart = 0;
+            if (burstStart > 65535) burstStart = 65535;
+            if (burstPerMs < 1) burstPerMs = 1;
+            if (burstPerMs > 65535) burstPerMs = 65535;
+            SendWeddingConfig((WORD)burstStart, (WORD)burstPerMs);
+        }
         if (LOWORD(wParam) == HMENU_StartSqueeze)
         {
             if (lsState == LS_IDLE)

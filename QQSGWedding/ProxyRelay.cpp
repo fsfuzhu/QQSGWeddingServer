@@ -38,7 +38,7 @@ static constexpr DWORD OFF_PLAYER_NAME     = 0x87D0;
 static constexpr DWORD PLAYER_NAME_MAX     = 32;
 
 // ============ Config ============
-static char s_proxyIP[64]      = "129.204.252.233";  // 固定代理IP
+static char s_proxyIP[64]      = "1.14.134.242";  // 固定代理IP
 static WORD s_proxyPort        = 19900;
 static bool s_redirectEnabled  = true;              // 直接启用重定向
 static char s_serverName[32]   = {0};               // 检测到的服务器名称（仅日志用）
@@ -536,6 +536,26 @@ static bool SendPlayerInfo(SOCKET sock, WORD x, WORD y, DWORD handle)
     memset(buf + 12, 0, 4);       // pad
     int sent = send(sock, buf, 16, 0);
     return sent == 16;
+}
+
+// ============ Protocol: Send Wedding Config (WCFG) ============
+// Format: "WCFG" + 2B burst_start_ms(LE) + 2B burst_per_ms(LE) = 8 bytes
+void SendWeddingConfig(WORD burstStartMs, WORD burstPerMs)
+{
+    if (s_proxySock == INVALID_SOCKET) {
+        Log("[ProxyRelay] WCFG: not connected to proxy\n");
+        return;
+    }
+    char buf[8];
+    memcpy(buf, "WCFG", 4);
+    memcpy(buf + 4, &burstStartMs, 2);   // LE
+    memcpy(buf + 6, &burstPerMs, 2);     // LE
+    int sent = send(s_proxySock, buf, 8, 0);
+    if (sent == 8) {
+        Log("[ProxyRelay] WCFG sent: burst_start=%d ms, burst_per_ms=%d\n", burstStartMs, burstPerMs);
+    } else {
+        Log("[ProxyRelay] WCFG send FAILED (sent=%d err=%d)\n", sent, WSAGetLastError());
+    }
 }
 
 // ============ Server Name Detection (仅日志用) ============

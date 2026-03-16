@@ -16,6 +16,10 @@ HWND Button_hwnd_Login = 0;
 HWND CheckBox_hwnd_AutoWeddingDate = 0;
 HWND Edit_hwnd_WeddingDate = 0, Edit_hwnd_WeddingInterval = 0;
 
+// === 婚礼爆发 UI 句柄 ===
+HWND Edit_hwnd_BurstStart = 0, Edit_hwnd_BurstPerMs = 0;
+HWND Button_hwnd_SyncWedding = 0;
+
 // === 挤线 UI 句柄 ===
 HWND Edit_hwnd_LineX = 0, Edit_hwnd_LineY = 0, Edit_hwnd_TargetLine = 0;
 HWND Button_StartLineSqueeze = 0, Static_LineStatus = 0, Static_CurrentLine = 0;

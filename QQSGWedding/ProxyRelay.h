@@ -20,3 +20,4 @@ void ProxyRelayInit();       // Call once from MyFunInpawn first tick
 void ProxyRelayTick();       // Call every frame from MyFunInpawn (internally rate-limited to ~200ms)
 void ProxyRelayCleanup();    // Call from DLL_PROCESS_DETACH
 bool IsProxyConnected();     // For UI status display
+void SendWeddingConfig(WORD burstStartMs, WORD burstPerMs);
