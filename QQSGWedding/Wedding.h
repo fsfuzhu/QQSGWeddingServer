@@ -1,6 +1,5 @@
-#pragma once
+﻿#pragma once
 
+void WeddingInit();             // 注册 WCDW handler (在 ProxyRelayInit 之后调用)
 void SendReserveWeddingDate();
-
-// 婚礼tick (每帧调用, 仅抢贵族婚期)
-void WeddingTick();
+void WeddingTick();             // 每帧调用

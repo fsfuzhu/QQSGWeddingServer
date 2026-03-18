@@ -161,7 +161,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
         // === 婚礼设置 ===
         CreateWindowA("Button", "婚礼设置", WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | BS_GROUPBOX,
-            5, 5, 435, 80, hwnd, NULL, NULL, NULL);
+            5, 5, 435, 105, hwnd, NULL, NULL, NULL);
         CreateWindowA("Static", "提前:", WS_CHILD | WS_VISIBLE,
             15, 27, 35, 20, hwnd, NULL, NULL, NULL);
         Edit_hwnd_BurstStart = CreateWindowA("Edit", "600",
@@ -201,35 +201,42 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER,
             290, 55, 50, 24, hwnd, NULL, NULL, NULL);
 
+        // 倒计时显示行
+        CreateWindowA("Static", "倒计时:", WS_CHILD | WS_VISIBLE,
+            15, 82, 50, 20, hwnd, NULL, NULL, NULL);
+        Static_WeddingCountdown = CreateWindowA("Static", "等待婚礼倒计时...",
+            WS_CHILD | WS_VISIBLE | SS_LEFT,
+            65, 82, 360, 20, hwnd, NULL, NULL, NULL);
+
         // === 挤线设置 ===
         CreateWindowA("Button", "挤线设置", WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | BS_GROUPBOX,
-            5, 90, 435, 100, hwnd, NULL, NULL, NULL);
+            5, 115, 435, 100, hwnd, NULL, NULL, NULL);
         CreateWindowA("Static", "当前线路:", WS_CHILD | WS_VISIBLE,
-            15, 110, 65, 20, hwnd, NULL, NULL, NULL);
+            15, 135, 65, 20, hwnd, NULL, NULL, NULL);
         Static_CurrentLine = CreateWindowA("Static", "未知", WS_CHILD | WS_VISIBLE,
-            80, 110, 50, 20, hwnd, NULL, NULL, NULL);
+            80, 135, 50, 20, hwnd, NULL, NULL, NULL);
         CreateWindowA("Static", "坐标X:", WS_CHILD | WS_VISIBLE,
-            145, 110, 42, 20, hwnd, NULL, NULL, NULL);
+            145, 135, 42, 20, hwnd, NULL, NULL, NULL);
         Edit_hwnd_LineX = CreateWindowA("Edit", "35",
             WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER,
-            187, 108, 55, 24, hwnd, NULL, NULL, NULL);
+            187, 133, 55, 24, hwnd, NULL, NULL, NULL);
         CreateWindowA("Static", "Y:", WS_CHILD | WS_VISIBLE,
-            248, 110, 18, 20, hwnd, NULL, NULL, NULL);
+            248, 135, 18, 20, hwnd, NULL, NULL, NULL);
         Edit_hwnd_LineY = CreateWindowA("Edit", "22",
             WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER,
-            266, 108, 55, 24, hwnd, NULL, NULL, NULL);
+            266, 133, 55, 24, hwnd, NULL, NULL, NULL);
         CreateWindowA("Static", "目标线路:", WS_CHILD | WS_VISIBLE,
-            15, 136, 65, 20, hwnd, NULL, NULL, NULL);
+            15, 161, 65, 20, hwnd, NULL, NULL, NULL);
         Edit_hwnd_TargetLine = CreateWindowA("Edit", "1",
             WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER,
-            80, 134, 40, 24, hwnd, NULL, NULL, NULL);
+            80, 159, 40, 24, hwnd, NULL, NULL, NULL);
         Button_StartLineSqueeze = CreateWindowA("Button", "开始挤线",
             WS_TABSTOP | WS_VISIBLE | WS_CHILD,
-            130, 134, 80, 24, hwnd, (HMENU)HMENU_StartSqueeze, NULL, NULL);
+            130, 159, 80, 24, hwnd, (HMENU)HMENU_StartSqueeze, NULL, NULL);
         CreateWindowA("Static", "状态:", WS_CHILD | WS_VISIBLE,
-            15, 162, 40, 20, hwnd, NULL, NULL, NULL);
+            15, 187, 40, 20, hwnd, NULL, NULL, NULL);
         Static_LineStatus = CreateWindowA("Static", "空闲", WS_CHILD | WS_VISIBLE,
-            55, 162, 370, 20, hwnd, NULL, NULL, NULL);
+            55, 187, 370, 20, hwnd, NULL, NULL, NULL);
 
         // 统一设置字体到所有子控件
         if (g_hFont)
@@ -358,7 +365,7 @@ void RegisterAndCreateMainWindow()
 
     // 固定窗口大小
     DWORD dwStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
-    int nWidth = 470, nHeight = 250;
+    int nWidth = 470, nHeight = 275;
 
     // 居中屏幕
     int screenW = GetSystemMetrics(SM_CXSCREEN);

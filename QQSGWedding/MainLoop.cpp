@@ -68,6 +68,7 @@ char __fastcall MyFunInpawn(DWORD* thisObj, void* _EDX, DWORD* a2)
         // PatchFrameLimit(1);  // 帧率补丁已屏蔽，不再使用
         RecvHook::Install(); // 安装收包 hook (保留用于调试)
         ProxyRelayInit();    // 初始化代理中继 (connect hook + TEA key relay)
+        WeddingInit();       // 注册 WCDW handler
         first = false;
     }
 

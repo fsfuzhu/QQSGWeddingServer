@@ -20,6 +20,9 @@ HWND Edit_hwnd_WeddingDate = 0, Edit_hwnd_WeddingInterval = 0;
 HWND Edit_hwnd_BurstStart = 0, Edit_hwnd_BurstPerMs = 0;
 HWND Button_hwnd_SyncWedding = 0;
 
+// === 婚礼倒计时 UI 句柄 ===
+HWND Static_WeddingCountdown = 0;
+
 // === 挤线 UI 句柄 ===
 HWND Edit_hwnd_LineX = 0, Edit_hwnd_LineY = 0, Edit_hwnd_TargetLine = 0;
 HWND Button_StartLineSqueeze = 0, Static_LineStatus = 0, Static_CurrentLine = 0;

@@ -64,6 +64,22 @@ static bool      s_initialized               = false;
 static bool      s_connectHookInstalled       = false;
 static ULONGLONG s_lastTickTime               = 0;
 
+// ============ Receive Framework State ============
+static constexpr int RECV_BUF_SIZE   = 4096;
+static constexpr int MAX_PAYLOAD_LEN = 1024;
+static constexpr int RECV_HEADER_LEN = 6;     // 4B magic + 2B LE payload_len
+static constexpr int MAX_HANDLERS    = 16;
+
+static BYTE s_recvBuf[RECV_BUF_SIZE]  = {0};
+static int  s_recvLen                 = 0;
+
+struct MsgHandlerEntry {
+    DWORD           magic;
+    ProxyMsgHandler handler;
+};
+static MsgHandlerEntry s_handlers[MAX_HANDLERS] = {};
+static int             s_handlerCount            = 0;
+
 // ============ Connect Hook State ============
 typedef int (WSAAPI *PFN_connect)(SOCKET, const struct sockaddr*, int);
 
@@ -584,6 +600,115 @@ static void DetectServerFromTitle()
     }
 }
 
+// ============ Receive: Process Buffer ============
+static bool ProcessRecvBuffer()
+{
+    while (s_recvLen >= RECV_HEADER_LEN) {
+        DWORD magic;
+        WORD payloadLen;
+        memcpy(&magic, s_recvBuf, 4);
+        memcpy(&payloadLen, s_recvBuf + 4, 2);  // LE
+
+        if (payloadLen > MAX_PAYLOAD_LEN) {
+            Log("[ProxyRelay] RX: payload too large (%d), stream corrupted\n", payloadLen);
+            return false;
+        }
+
+        int msgTotalLen = RECV_HEADER_LEN + payloadLen;
+        if (s_recvLen < msgTotalLen) {
+            break;
+        }
+
+        const BYTE* payload = s_recvBuf + RECV_HEADER_LEN;
+        bool handled = false;
+        for (int i = 0; i < s_handlerCount; i++) {
+            if (s_handlers[i].magic == magic) {
+                s_handlers[i].handler(payload, payloadLen);
+                handled = true;
+                break;
+            }
+        }
+
+        if (!handled) {
+            char magicStr[5] = {0};
+            memcpy(magicStr, &magic, 4);
+            Log("[ProxyRelay] RX: unhandled magic '%s' (%d bytes)\n", magicStr, payloadLen);
+        }
+
+        s_recvLen -= msgTotalLen;
+        if (s_recvLen > 0) {
+            memmove(s_recvBuf, s_recvBuf + msgTotalLen, s_recvLen);
+        }
+    }
+    return true;
+}
+
+// ============ Receive: Poll & Read ============
+static void ProxyRelayRecv()
+{
+    if (s_proxySock == INVALID_SOCKET) return;
+
+    for (;;) {
+        fd_set readfds;
+        FD_ZERO(&readfds);
+        FD_SET(s_proxySock, &readfds);
+        struct timeval tv = {0, 0};
+
+        int selResult = select(0, &readfds, NULL, NULL, &tv);
+        if (selResult <= 0) break;
+
+        int space = RECV_BUF_SIZE - s_recvLen;
+        if (space <= 0) {
+            s_recvLen = 0;
+            break;
+        }
+
+        int recvd = recv(s_proxySock, (char*)(s_recvBuf + s_recvLen), space, 0);
+        if (recvd <= 0) {
+            Log("[ProxyRelay] RX: recv returned %d (err=%d), disconnecting\n",
+                recvd, WSAGetLastError());
+            closesocket(s_proxySock);
+            s_proxySock = INVALID_SOCKET;
+            s_recvLen = 0;
+            return;
+        }
+
+        s_recvLen += recvd;
+    }
+
+    if (s_recvLen > 0) {
+        if (!ProcessRecvBuffer()) {
+            closesocket(s_proxySock);
+            s_proxySock = INVALID_SOCKET;
+            s_recvLen = 0;
+        }
+    }
+}
+
+// ============ Register Message Handler ============
+bool ProxyRelayRegisterHandler(const char* magic4, ProxyMsgHandler handler)
+{
+    if (!magic4 || !handler) return false;
+
+    DWORD magic;
+    memcpy(&magic, magic4, 4);
+
+    for (int i = 0; i < s_handlerCount; i++) {
+        if (s_handlers[i].magic == magic) {
+            s_handlers[i].handler = handler;
+            return true;
+        }
+    }
+
+    if (s_handlerCount >= MAX_HANDLERS) return false;
+
+    s_handlers[s_handlerCount].magic = magic;
+    s_handlers[s_handlerCount].handler = handler;
+    s_handlerCount++;
+    Log("[ProxyRelay] Handler registered for '%.4s'\n", magic4);
+    return true;
+}
+
 // ============ Public API ============
 
 void ProxyRelayInit()
@@ -608,6 +733,9 @@ void ProxyRelayInit()
 void ProxyRelayTick()
 {
     if (!s_initialized) return;
+
+    // Always poll for incoming messages every frame (not rate-limited)
+    ProxyRelayRecv();
 
     // Rate-limit to ~5Hz (every 200ms)
     ULONGLONG now = GetTickCount64();
@@ -730,6 +858,9 @@ void ProxyRelayCleanup()
         closesocket(s_proxySock);
         s_proxySock = INVALID_SOCKET;
     }
+
+    s_recvLen = 0;
+    s_handlerCount = 0;
 
     UninstallConnectHook();
     WSACleanup();

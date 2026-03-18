@@ -1,4 +1,6 @@
-#pragma once
+﻿#pragma once
+
+#include <windows.h>
 
 // ============================================================
 // ProxyRelay — TEA Key Relay + Connect Hook (tick-based, non-threaded)
@@ -12,8 +14,7 @@
 //   2. Send player name (KNAM), position/handle (KINF), game time (KTIM)
 //   3. Send game server address (KSRV) — auto-detected from connect()
 //   4. Inline hook ws2_32!connect to redirect game ports -> proxy
-//
-// Proxy IP: 43.139.221.10:19900 (hardcoded)
+//   5. Receive messages from proxy (WCDW etc.)
 // ============================================================
 
 void ProxyRelayInit();       // Call once from MyFunInpawn first tick
@@ -21,3 +22,8 @@ void ProxyRelayTick();       // Call every frame from MyFunInpawn (internally ra
 void ProxyRelayCleanup();    // Call from DLL_PROCESS_DETACH
 bool IsProxyConnected();     // For UI status display
 void SendWeddingConfig(WORD burstStartMs, WORD burstPerMs);
+
+// === Receive Handler API ===
+// 回调签名: void handler(const BYTE* payload, int payloadLen)
+typedef void (*ProxyMsgHandler)(const BYTE* payload, int payloadLen);
+bool ProxyRelayRegisterHandler(const char* magic4, ProxyMsgHandler handler);
