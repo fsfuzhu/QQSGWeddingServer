@@ -3,6 +3,7 @@
 #include "GameData.h"
 #include "Navigation.h"
 #include "ProxyRelay.h"
+#include "Wedding.h"
 #include <cstdio>
 #include <cstring>
 
@@ -25,7 +26,7 @@ void invokeLogin(HWND hwnd)
 {
     char buffer[256];
     GetWindowTextA(Edit_hwnd_SingleCode, buffer, sizeof(buffer));
-    ClientVersion version(2, 0, 1, 7);
+    ClientVersion version(2, 0, 1, 8);
     if (HAP_Initialize("15.204.11.218", 18000, version))
     {
         if (HAP_Login(buffer))
@@ -161,31 +162,54 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
         // === 婚礼设置 ===
         CreateWindowA("Button", "婚礼设置", WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | BS_GROUPBOX,
-            5, 5, 435, 105, hwnd, NULL, NULL, NULL);
-        CreateWindowA("Static", "提前:", WS_CHILD | WS_VISIBLE,
-            15, 27, 35, 20, hwnd, NULL, NULL, NULL);
-        Edit_hwnd_BurstStart = CreateWindowA("Edit", "600",
-            WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
-            50, 25, 50, 24, hwnd, NULL, NULL, NULL);
-        CreateWindowA("Static", "ms", WS_CHILD | WS_VISIBLE,
-            102, 27, 20, 20, hwnd, NULL, NULL, NULL);
+            5, 5, 435, 130, hwnd, NULL, NULL, NULL);
 
-        CreateWindowA("Static", "每ms:", WS_CHILD | WS_VISIBLE,
-            125, 27, 40, 20, hwnd, NULL, NULL, NULL);
-        Edit_hwnd_BurstPerMs = CreateWindowA("Edit", "10",
+        // Row 1: 温和阶段
+        CreateWindowA("Static", "温和: 每", WS_CHILD | WS_VISIBLE,
+            15, 25, 48, 20, hwnd, NULL, NULL, NULL);
+        Edit_hwnd_GentleInterval = CreateWindowA("Edit", "18",
             WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER,
-            165, 25, 40, 24, hwnd, NULL, NULL, NULL);
+            63, 23, 40, 24, hwnd, NULL, NULL, NULL);
+        CreateWindowA("Static", "ms 发", WS_CHILD | WS_VISIBLE,
+            105, 25, 28, 20, hwnd, NULL, NULL, NULL);
+        Edit_hwnd_GentleCount = CreateWindowA("Edit", "1",
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER,
+            133, 23, 30, 24, hwnd, NULL, NULL, NULL);
         CreateWindowA("Static", "包", WS_CHILD | WS_VISIBLE,
-            207, 27, 15, 20, hwnd, NULL, NULL, NULL);
+            165, 25, 18, 20, hwnd, NULL, NULL, NULL);
+        Button_hwnd_GentleToggle = CreateWindowA("Button", "开始温和",
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD,
+            190, 23, 70, 24, hwnd, (HMENU)HMENU_GentleToggle, NULL, NULL);
+
+        // Row 2: 爆发阶段
+        CreateWindowA("Static", "爆发: 提前", WS_CHILD | WS_VISIBLE,
+            15, 53, 60, 20, hwnd, NULL, NULL, NULL);
+        Edit_hwnd_AggressiveStart = CreateWindowA("Edit", "1000",
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER,
+            75, 51, 45, 24, hwnd, NULL, NULL, NULL);
+        CreateWindowA("Static", "ms 每", WS_CHILD | WS_VISIBLE,
+            122, 53, 28, 20, hwnd, NULL, NULL, NULL);
+        Edit_hwnd_AggressiveInterval = CreateWindowA("Edit", "100",
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER,
+            150, 51, 40, 24, hwnd, NULL, NULL, NULL);
+        CreateWindowA("Static", "ms 发", WS_CHILD | WS_VISIBLE,
+            192, 53, 28, 20, hwnd, NULL, NULL, NULL);
+        Edit_hwnd_AggressiveCount = CreateWindowA("Edit", "30",
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER,
+            220, 51, 35, 24, hwnd, NULL, NULL, NULL);
+        CreateWindowA("Static", "包", WS_CHILD | WS_VISIBLE,
+            257, 53, 18, 20, hwnd, NULL, NULL, NULL);
 
         Button_hwnd_SyncWedding = CreateWindowA("Button", "同步",
             WS_TABSTOP | WS_VISIBLE | WS_CHILD,
-            230, 25, 50, 24, hwnd, (HMENU)HMENU_SyncWedding, NULL, NULL);
+            285, 51, 45, 24, hwnd, (HMENU)HMENU_SyncWedding, NULL, NULL);
+
+        // Row 3: 抢婚期 + 倒计时
         CheckBox_hwnd_AutoWeddingDate = CreateWindowA("Button", "抢贵族婚期",
             WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX,
-            15, 55, 110, 24, hwnd, NULL, NULL, NULL);
+            15, 80, 110, 24, hwnd, NULL, NULL, NULL);
         CreateWindowA("Static", "日期:", WS_CHILD | WS_VISIBLE,
-            130, 57, 35, 20, hwnd, NULL, NULL, NULL);
+            130, 82, 35, 20, hwnd, NULL, NULL, NULL);
         { // 获取今天日期作为默认值
             SYSTEMTIME st;
             GetLocalTime(&st);
@@ -193,50 +217,65 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             sprintf(todayStr, "%04d%02d%02d", st.wYear, st.wMonth, st.wDay);
             Edit_hwnd_WeddingDate = CreateWindowA("Edit", todayStr,
                 WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER,
-                165, 55, 80, 24, hwnd, NULL, NULL, NULL);
+                165, 80, 80, 24, hwnd, NULL, NULL, NULL);
         }
         CreateWindowA("Static", "间隔:", WS_CHILD | WS_VISIBLE,
-            255, 57, 35, 20, hwnd, NULL, NULL, NULL);
+            255, 82, 35, 20, hwnd, NULL, NULL, NULL);
         Edit_hwnd_WeddingInterval = CreateWindowA("Edit", "100",
             WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER,
-            290, 55, 50, 24, hwnd, NULL, NULL, NULL);
+            290, 80, 50, 24, hwnd, NULL, NULL, NULL);
 
-        // 倒计时显示行
+        // Row 4: 倒计时显示
         CreateWindowA("Static", "倒计时:", WS_CHILD | WS_VISIBLE,
-            15, 82, 50, 20, hwnd, NULL, NULL, NULL);
+            15, 108, 50, 20, hwnd, NULL, NULL, NULL);
         Static_WeddingCountdown = CreateWindowA("Static", "等待婚礼倒计时...",
             WS_CHILD | WS_VISIBLE | SS_LEFT,
-            65, 82, 360, 20, hwnd, NULL, NULL, NULL);
+            65, 108, 360, 20, hwnd, NULL, NULL, NULL);
+
+        // === NPC触发 (自动点击"举办婚礼") ===
+        CreateWindowA("Static", "NPC触发:", WS_CHILD | WS_VISIBLE,
+            15, 137, 58, 20, hwnd, NULL, NULL, NULL);
+        CreateWindowA("Static", "次数:", WS_CHILD | WS_VISIBLE,
+            73, 137, 35, 20, hwnd, NULL, NULL, NULL);
+        Edit_hwnd_NpcTriggerCount = CreateWindowA("Edit", "5",
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER,
+            108, 135, 40, 24, hwnd, NULL, NULL, NULL);
+        Button_NpcTrigger = CreateWindowA("Button", "开始触发",
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD,
+            155, 135, 70, 24, hwnd, (HMENU)HMENU_NpcTrigger, NULL, NULL);
+        Static_NpcTriggerProgress = CreateWindowA("Static", "就绪",
+            WS_CHILD | WS_VISIBLE | SS_LEFT,
+            230, 137, 200, 20, hwnd, NULL, NULL, NULL);
 
         // === 挤线设置 ===
         CreateWindowA("Button", "挤线设置", WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | BS_GROUPBOX,
-            5, 115, 435, 100, hwnd, NULL, NULL, NULL);
+            5, 162, 435, 100, hwnd, NULL, NULL, NULL);
         CreateWindowA("Static", "当前线路:", WS_CHILD | WS_VISIBLE,
-            15, 135, 65, 20, hwnd, NULL, NULL, NULL);
+            15, 182, 65, 20, hwnd, NULL, NULL, NULL);
         Static_CurrentLine = CreateWindowA("Static", "未知", WS_CHILD | WS_VISIBLE,
-            80, 135, 50, 20, hwnd, NULL, NULL, NULL);
+            80, 182, 50, 20, hwnd, NULL, NULL, NULL);
         CreateWindowA("Static", "坐标X:", WS_CHILD | WS_VISIBLE,
-            145, 135, 42, 20, hwnd, NULL, NULL, NULL);
+            145, 182, 42, 20, hwnd, NULL, NULL, NULL);
         Edit_hwnd_LineX = CreateWindowA("Edit", "35",
             WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER,
-            187, 133, 55, 24, hwnd, NULL, NULL, NULL);
+            187, 180, 55, 24, hwnd, NULL, NULL, NULL);
         CreateWindowA("Static", "Y:", WS_CHILD | WS_VISIBLE,
-            248, 135, 18, 20, hwnd, NULL, NULL, NULL);
+            248, 182, 18, 20, hwnd, NULL, NULL, NULL);
         Edit_hwnd_LineY = CreateWindowA("Edit", "22",
             WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER,
-            266, 133, 55, 24, hwnd, NULL, NULL, NULL);
+            266, 180, 55, 24, hwnd, NULL, NULL, NULL);
         CreateWindowA("Static", "目标线路:", WS_CHILD | WS_VISIBLE,
-            15, 161, 65, 20, hwnd, NULL, NULL, NULL);
+            15, 208, 65, 20, hwnd, NULL, NULL, NULL);
         Edit_hwnd_TargetLine = CreateWindowA("Edit", "1",
             WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER,
-            80, 159, 40, 24, hwnd, NULL, NULL, NULL);
+            80, 206, 40, 24, hwnd, NULL, NULL, NULL);
         Button_StartLineSqueeze = CreateWindowA("Button", "开始挤线",
             WS_TABSTOP | WS_VISIBLE | WS_CHILD,
-            130, 159, 80, 24, hwnd, (HMENU)HMENU_StartSqueeze, NULL, NULL);
+            130, 206, 80, 24, hwnd, (HMENU)HMENU_StartSqueeze, NULL, NULL);
         CreateWindowA("Static", "状态:", WS_CHILD | WS_VISIBLE,
-            15, 187, 40, 20, hwnd, NULL, NULL, NULL);
+            15, 234, 40, 20, hwnd, NULL, NULL, NULL);
         Static_LineStatus = CreateWindowA("Static", "空闲", WS_CHILD | WS_VISIBLE,
-            55, 187, 370, 20, hwnd, NULL, NULL, NULL);
+            55, 234, 370, 20, hwnd, NULL, NULL, NULL);
 
         // 统一设置字体到所有子控件
         if (g_hFont)
@@ -248,18 +287,45 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
     case WM_COMMAND:
     {
+        if (LOWORD(wParam) == HMENU_GentleToggle)
+        {
+            static bool gentleOn = false;
+            gentleOn = !gentleOn;
+            SendGentleEnable(gentleOn);
+            SetWindowTextA(Button_hwnd_GentleToggle, gentleOn ? "停止温和" : "开始温和");
+        }
         if (LOWORD(wParam) == HMENU_SyncWedding)
         {
-            char sBurstStart[16] = { 0 }, sBurstPerMs[16] = { 0 };
-            GetWindowTextA(Edit_hwnd_BurstStart, sBurstStart, 16);
-            GetWindowTextA(Edit_hwnd_BurstPerMs, sBurstPerMs, 16);
-            int burstStart = atoi(sBurstStart);
-            int burstPerMs = atoi(sBurstPerMs);
-            if (burstStart < 0) burstStart = 0;
-            if (burstStart > 65535) burstStart = 65535;
-            if (burstPerMs < 1) burstPerMs = 1;
-            if (burstPerMs > 65535) burstPerMs = 65535;
-            SendWeddingConfig((WORD)burstStart, (WORD)burstPerMs);
+            char s1[16]={0}, s2[16]={0}, s3[16]={0}, s4[16]={0}, s5[16]={0};
+            GetWindowTextA(Edit_hwnd_GentleInterval, s1, 16);
+            GetWindowTextA(Edit_hwnd_GentleCount, s2, 16);
+            GetWindowTextA(Edit_hwnd_AggressiveStart, s3, 16);
+            GetWindowTextA(Edit_hwnd_AggressiveInterval, s4, 16);
+            GetWindowTextA(Edit_hwnd_AggressiveCount, s5, 16);
+            int gi = atoi(s1), gc = atoi(s2), as_ = atoi(s3), ai = atoi(s4), ac = atoi(s5);
+            if (gi < 1) gi = 1; if (gi > 65535) gi = 65535;
+            if (gc < 1) gc = 1; if (gc > 65535) gc = 65535;
+            if (as_ < 0) as_ = 0; if (as_ > 65535) as_ = 65535;
+            if (ai < 1) ai = 1; if (ai > 65535) ai = 65535;
+            if (ac < 1) ac = 1; if (ac > 65535) ac = 65535;
+            SendWeddingConfig((WORD)gi, (WORD)gc, (WORD)as_, (WORD)ai, (WORD)ac);
+        }
+        if (LOWORD(wParam) == HMENU_NpcTrigger)
+        {
+            // 切换: 正在运行则停止, 否则启动
+            if (IsNpcTriggerActive())
+            {
+                NpcTriggerStop();
+            }
+            else
+            {
+                char sCnt[16] = { 0 };
+                GetWindowTextA(Edit_hwnd_NpcTriggerCount, sCnt, 16);
+                int cnt = atoi(sCnt);
+                if (cnt < 1) cnt = 1;
+                if (cnt > 200) cnt = 200;
+                NpcTriggerStart(cnt);
+            }
         }
         if (LOWORD(wParam) == HMENU_StartSqueeze)
         {
@@ -365,7 +431,7 @@ void RegisterAndCreateMainWindow()
 
     // 固定窗口大小
     DWORD dwStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
-    int nWidth = 470, nHeight = 275;
+    int nWidth = 470, nHeight = 330;
 
     // 居中屏幕
     int screenW = GetSystemMetrics(SM_CXSCREEN);

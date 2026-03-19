@@ -16,12 +16,19 @@ HWND Button_hwnd_Login = 0;
 HWND CheckBox_hwnd_AutoWeddingDate = 0;
 HWND Edit_hwnd_WeddingDate = 0, Edit_hwnd_WeddingInterval = 0;
 
-// === 婚礼爆发 UI 句柄 ===
-HWND Edit_hwnd_BurstStart = 0, Edit_hwnd_BurstPerMs = 0;
+// === 婚礼爆发 UI 句柄 (两段式) ===
+HWND Edit_hwnd_GentleInterval = 0, Edit_hwnd_GentleCount = 0;
+HWND Button_hwnd_GentleToggle = 0;
+HWND Edit_hwnd_AggressiveStart = 0, Edit_hwnd_AggressiveInterval = 0, Edit_hwnd_AggressiveCount = 0;
 HWND Button_hwnd_SyncWedding = 0;
 
 // === 婚礼倒计时 UI 句柄 ===
 HWND Static_WeddingCountdown = 0;
+
+// === NPC触发 UI 句柄 ===
+HWND Edit_hwnd_NpcTriggerCount = 0;
+HWND Button_NpcTrigger = 0;
+HWND Static_NpcTriggerProgress = 0;
 
 // === 挤线 UI 句柄 ===
 HWND Edit_hwnd_LineX = 0, Edit_hwnd_LineY = 0, Edit_hwnd_TargetLine = 0;

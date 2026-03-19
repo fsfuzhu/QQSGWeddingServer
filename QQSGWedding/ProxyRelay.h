@@ -21,7 +21,9 @@ void ProxyRelayInit();       // Call once from MyFunInpawn first tick
 void ProxyRelayTick();       // Call every frame from MyFunInpawn (internally rate-limited to ~200ms)
 void ProxyRelayCleanup();    // Call from DLL_PROCESS_DETACH
 bool IsProxyConnected();     // For UI status display
-void SendWeddingConfig(WORD burstStartMs, WORD burstPerMs);
+void SendWeddingConfig(WORD gentleInterval, WORD gentleCount, WORD aggressiveStart, WORD aggressiveInterval, WORD aggressiveCount);
+void SendNpcTrigger(WORD count);  // 发送 NTRG 请求代理重放 0x3F7
+void SendGentleEnable(bool enable);  // 发送 WGEN 温和发包开关
 
 // === Receive Handler API ===
 // 回调签名: void handler(const BYTE* payload, int payloadLen)

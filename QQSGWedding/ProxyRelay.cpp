@@ -38,7 +38,7 @@ static constexpr DWORD OFF_PLAYER_NAME     = 0x87D0;
 static constexpr DWORD PLAYER_NAME_MAX     = 32;
 
 // ============ Config ============
-static char s_proxyIP[64]      = "1.14.134.242";  // 固定代理IP
+static char s_proxyIP[64]      = "106.53.152.52";  // 固定代理IP
 static WORD s_proxyPort        = 19900;
 static bool s_redirectEnabled  = true;              // 直接启用重定向
 static char s_serverName[32]   = {0};               // 检测到的服务器名称（仅日志用）
@@ -555,22 +555,64 @@ static bool SendPlayerInfo(SOCKET sock, WORD x, WORD y, DWORD handle)
 }
 
 // ============ Protocol: Send Wedding Config (WCFG) ============
-// Format: "WCFG" + 2B burst_start_ms(LE) + 2B burst_per_ms(LE) = 8 bytes
-void SendWeddingConfig(WORD burstStartMs, WORD burstPerMs)
+// Format: "WCFG" + 2B gentle_start + 2B gentle_interval + 2B aggressive_start + 2B aggressive_interval + 2B aggressive_count = 14 bytes
+void SendWeddingConfig(WORD gentleInterval, WORD gentleCount, WORD aggressiveStart, WORD aggressiveInterval, WORD aggressiveCount)
 {
     if (s_proxySock == INVALID_SOCKET) {
         Log("[ProxyRelay] WCFG: not connected to proxy\n");
         return;
     }
-    char buf[8];
+    char buf[14];
     memcpy(buf, "WCFG", 4);
-    memcpy(buf + 4, &burstStartMs, 2);   // LE
-    memcpy(buf + 6, &burstPerMs, 2);     // LE
-    int sent = send(s_proxySock, buf, 8, 0);
-    if (sent == 8) {
-        Log("[ProxyRelay] WCFG sent: burst_start=%d ms, burst_per_ms=%d\n", burstStartMs, burstPerMs);
+    memcpy(buf + 4, &gentleInterval, 2);
+    memcpy(buf + 6, &gentleCount, 2);
+    memcpy(buf + 8, &aggressiveStart, 2);
+    memcpy(buf + 10, &aggressiveInterval, 2);
+    memcpy(buf + 12, &aggressiveCount, 2);
+    int sent = send(s_proxySock, buf, 14, 0);
+    if (sent == 14) {
+        Log("[ProxyRelay] WCFG sent: gentle=%dms x%d, aggressive=%dms前/%dms x%d\n",
+            gentleInterval, gentleCount, aggressiveStart, aggressiveInterval, aggressiveCount);
     } else {
         Log("[ProxyRelay] WCFG send FAILED (sent=%d err=%d)\n", sent, WSAGetLastError());
+    }
+}
+
+// ============ Protocol: Send Gentle Enable (WGEN) ============
+// Format: "WGEN" + 1B enable = 5 bytes
+void SendGentleEnable(bool enable)
+{
+    if (s_proxySock == INVALID_SOCKET) {
+        Log("[ProxyRelay] WGEN: not connected to proxy\n");
+        return;
+    }
+    char buf[5];
+    memcpy(buf, "WGEN", 4);
+    buf[4] = enable ? 1 : 0;
+    int sent = send(s_proxySock, buf, 5, 0);
+    if (sent == 5) {
+        Log("[ProxyRelay] WGEN sent: enable=%d\n", enable);
+    } else {
+        Log("[ProxyRelay] WGEN send FAILED (sent=%d err=%d)\n", sent, WSAGetLastError());
+    }
+}
+
+// ============ Protocol: Send NPC Trigger (NTRG) ============
+// Format: "NTRG" + 2B count(LE) = 6 bytes
+void SendNpcTrigger(WORD count)
+{
+    if (s_proxySock == INVALID_SOCKET) {
+        Log("[ProxyRelay] NTRG: not connected to proxy\n");
+        return;
+    }
+    char buf[6];
+    memcpy(buf, "NTRG", 4);
+    memcpy(buf + 4, &count, 2);  // LE
+    int sent = send(s_proxySock, buf, 6, 0);
+    if (sent == 6) {
+        Log("[ProxyRelay] NTRG sent: count=%d\n", count);
+    } else {
+        Log("[ProxyRelay] NTRG send FAILED (sent=%d err=%d)\n", sent, WSAGetLastError());
     }
 }
 

@@ -10,6 +10,11 @@
 static volatile DWORD g_weddingTargetSec = 0;   // 目标时间 (游戏时间秒)
 static volatile bool  g_hasWeddingCountdown = false;
 
+// === NPC触发状态 (由 proxy NPRG 回传更新) ===
+static volatile int  g_npcTriggerTotal = 0;     // 总次数
+static volatile int  g_npcTriggerSent = 0;      // 已发送次数
+static volatile bool g_npcTriggerActive = false; // 是否正在执行
+
 // === 读取游戏服务器时间 (毫秒) ===
 static __int64 ReadServerTimeMs()
 {
@@ -38,10 +43,41 @@ static void OnWCDW(const BYTE* payload, int payloadLen)
     g_hasWeddingCountdown = true;
 }
 
+// === NPRG Handler: 从 proxy 收到 NPC 触发进度 ===
+// payload: [2B sent LE][2B total LE]
+static void OnNPRG(const BYTE* payload, int payloadLen)
+{
+    if (payloadLen < 4) return;
+
+    WORD sent  = *(WORD*)(payload);
+    WORD total = *(WORD*)(payload + 2);
+
+    g_npcTriggerSent = sent;
+    g_npcTriggerTotal = total;
+
+    if (Static_NpcTriggerProgress)
+    {
+        char buf[64];
+        if (sent >= total)
+        {
+            sprintf(buf, "完成 %d/%d", sent, total);
+            g_npcTriggerActive = false;
+            if (Button_NpcTrigger)
+                SetWindowTextA(Button_NpcTrigger, "开始触发");
+        }
+        else
+        {
+            sprintf(buf, "%d / %d", sent, total);
+        }
+        SetWindowTextA(Static_NpcTriggerProgress, buf);
+    }
+}
+
 // === 初始化婚礼模块 (注册 handler, 在 ProxyRelayInit 之后调用) ===
 void WeddingInit()
 {
     ProxyRelayRegisterHandler("WCDW", OnWCDW);
+    ProxyRelayRegisterHandler("NPRG", OnNPRG);
 }
 
 // === 直接发包预约婚期 (包头4364, 4字节时间戳) ===
@@ -133,4 +169,41 @@ void WeddingTick()
             lastWeddingDateTime = currentTime;
         }
     }
+
+    // (NPC 触发进度由 proxy NPRG 回调更新 UI, 这里无需 tick 逻辑)
+}
+
+// === NPC 触发: 启动 (发送 NTRG 给 proxy) ===
+void NpcTriggerStart(int count)
+{
+    if (count <= 0) count = 1;
+    if (count > 200) count = 200;
+    g_npcTriggerTotal = count;
+    g_npcTriggerSent = 0;
+    g_npcTriggerActive = true;
+    if (Button_NpcTrigger)
+        SetWindowTextA(Button_NpcTrigger, "发送中...");
+    if (Static_NpcTriggerProgress)
+        SetWindowTextA(Static_NpcTriggerProgress, "请求中...");
+    SendNpcTrigger((WORD)count);
+}
+
+// === NPC 触发: 停止 ===
+void NpcTriggerStop()
+{
+    g_npcTriggerActive = false;
+    if (Button_NpcTrigger)
+        SetWindowTextA(Button_NpcTrigger, "开始触发");
+    if (Static_NpcTriggerProgress)
+    {
+        char buf[64];
+        sprintf(buf, "已停止 %d/%d", g_npcTriggerSent, g_npcTriggerTotal);
+        SetWindowTextA(Static_NpcTriggerProgress, buf);
+    }
+}
+
+// === NPC 触发: 查询状态 ===
+bool IsNpcTriggerActive()
+{
+    return g_npcTriggerActive;
 }

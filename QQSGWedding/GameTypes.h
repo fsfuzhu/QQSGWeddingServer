@@ -61,9 +61,8 @@ namespace Offsets
     const DWORD CPlyShopName = 0x11C;
     const DWORD NPCName = 0x87C4;
     const DWORD IgnoreChaos = 0x8684;
-    const DWORD IgnoreBlackScreen_1 = 0x1DC;
-    const DWORD IgnoreBlackScreen_2 = 0x200;
-    const DWORD Ignore_BlackScreen = ADDR_IGNORE_BLACK_SCREEN;
+    const DWORD IgnoreBlackScreen_1 = OFFSET_IGNORE_BLACKSCREEN_1;
+    const DWORD IgnoreBlackScreen_2 = OFFSET_IGNORE_BLACKSCREEN_2;
     const DWORD BackpackItemStartBase = 0x4F0;
     const DWORD BackpackItemEndBase = 0x4F4;
     const DWORD BackpackItemID = 0x8;
